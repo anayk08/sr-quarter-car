@@ -15,7 +15,7 @@ from quartercar import plotting
 
 st.set_page_config(page_title="Quarter-car (web)", layout="wide")
 
-st.title("FSAE quarter-car: run a simulation in the browser")
+st.title("fsae quarter-car sim")
 
 # Sidebar: basic inputs (a small but useful subset)
 st.sidebar.header("Corner (sprung / unsprung)")
