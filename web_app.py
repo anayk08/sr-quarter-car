@@ -185,31 +185,35 @@ def main():
     st.title("FSAE quarter-car suspension design tool")
 
     with st.sidebar:
-        st.header("Corner")
-        st.number_input("sprung mass (kg)", key="sprung_mass", min_value=0.0, value=float(st.session_state["sprung_mass"]), step=0.01)
-        st.number_input("unsprung mass (kg)", key="unsprung_mass", min_value=0.0, value=float(st.session_state["unsprung_mass"]), step=0.01)
+        with st.form("sim_form"):
+            st.header("Corner")
+            st.number_input("sprung mass (kg)", key="sprung_mass", min_value=0.0, value=float(st.session_state["sprung_mass"]), step=0.01)
+            st.number_input("unsprung mass (kg)", key="unsprung_mass", min_value=0.0, value=float(st.session_state["unsprung_mass"]), step=0.01)
 
-        st.header("Spring / motion ratio")
-        st.number_input("spring rate (lbf/in)", key="spring_lbf_in", min_value=0.0, value=float(st.session_state["spring_lbf_in"]), step=1.0)
-        st.number_input("motion ratio", key="motion_ratio", min_value=0.0, value=float(st.session_state["motion_ratio"]), step=0.01)
+            st.header("Spring / motion ratio")
+            st.number_input("spring rate (lbf/in)", key="spring_lbf_in", min_value=0.0, value=float(st.session_state["spring_lbf_in"]), step=1.0)
+            st.number_input("motion ratio", key="motion_ratio", min_value=0.0, value=float(st.session_state["motion_ratio"]), step=0.01)
 
-        st.header("Tire")
-        st.number_input("tire spring rate (lbf/in)", key="tire_lbf_in", min_value=0.0, value=float(st.session_state["tire_lbf_in"]), step=1.0)
+            st.header("Tire")
+            st.number_input("tire spring rate (lbf/in)", key="tire_lbf_in", min_value=0.0, value=float(st.session_state["tire_lbf_in"]), step=1.0)
 
-        st.header("Damper")
-        st.slider("damping scale", key="damping_scale", min_value=0.1, max_value=2.0, value=float(st.session_state["damping_scale"]), step=0.05)
+            st.header("Damper")
+            st.slider("damping scale", key="damping_scale", min_value=0.1, max_value=2.0, value=float(st.session_state["damping_scale"]), step=0.05)
 
-        st.header("Road")
-        st.selectbox("profile", options=("bump", "cone", "triangle", "rumble strip"), key="profile")
-        st.number_input("feature height (mm)", key="height_mm", min_value=0.0, value=float(st.session_state["height_mm"]), step=0.1)
-        st.number_input("feature length (m)", key="length_m", min_value=0.01, value=float(st.session_state["length_m"]), step=0.01)
-        st.number_input("vehicle speed (km/h)", key="speed_kph", min_value=0.1, value=float(st.session_state["speed_kph"]), step=1.0)
+            st.header("Road")
+            st.selectbox("profile", options=("bump", "cone", "triangle", "rumble strip"), key="profile")
+            st.number_input("feature height (mm)", key="height_mm", min_value=0.0, value=float(st.session_state["height_mm"]), step=0.1)
+            st.number_input("feature length (m)", key="length_m", min_value=0.01, value=float(st.session_state["length_m"]), step=0.01)
+            st.number_input("vehicle speed (km/h)", key="speed_kph", min_value=0.1, value=float(st.session_state["speed_kph"]), step=1.0)
 
-        st.header("Simulation")
-        st.number_input("sample rate (Hz)", key="sample_rate", min_value=10.0, value=float(st.session_state["sample_rate"]), step=10.0)
+            st.header("Simulation")
+            st.number_input("sample rate (Hz)", key="sample_rate", min_value=10.0, value=float(st.session_state["sample_rate"]), step=10.0)
 
-        st.write("")
-        st.form_submit_button("Run simulation", on_click=run_case)
+            st.write("")
+            submitted = st.form_submit_button("Run simulation")
+
+    if submitted:
+        run_case()
 
     case = st.session_state.get("last_case") or build_case()
     evaluation = st.session_state.get("last_evaluation")
