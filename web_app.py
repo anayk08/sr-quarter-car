@@ -74,7 +74,19 @@ def _apply_theme():
         button[kind="primary"], button[data-testid="stBaseButton-primary"] {
           background: #111 !important; color: #f4f4f2 !important;
         }
-        div[data-testid="stMetric"] { border: 2px solid #000; padding: 0.5rem; }
+        div[data-testid="stMetric"] {
+          border: 2px solid #000; padding: 0.5rem; color: #111 !important;
+          opacity: 1 !important; animation: none !important; transition: none !important;
+        }
+        div[data-testid="stMetric"] *,
+        div[data-testid="stMetric"] label,
+        div[data-testid="stMetric"] [data-testid="stMetricLabel"],
+        div[data-testid="stMetric"] [data-testid="stMetricValue"],
+        div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
+          color: #111 !important; opacity: 1 !important;
+          animation: none !important; transition: none !important;
+          -webkit-text-fill-color: #111 !important;
+        }
         [data-testid="stCaptionContainer"] { color: #4a4a48; }
         </style>
         """,
