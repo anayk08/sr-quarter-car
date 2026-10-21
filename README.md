@@ -1,12 +1,9 @@
-# FSAE quarter-car suspension design tool
+# SR-18 Quarter Car modeling tool
 
-A desktop app for sizing one wheel corner of an FSAE car. You build a road
+A desktop app for sizing one wheel corner of our FSAE car. You build a road
 (presets or your own), sweep motion ratio, spring rate, damping, downforce,
 road input and masses, check every setup against hard design limits, and
 rank the setups that pass by the number you care about.
-
-It grew out of the v1 script (`Context+Materials/QuarterCar.py`) and keeps
-its equations, names and sign conventions.
 
 ## Setup
 
@@ -148,18 +145,6 @@ quartercar/
   gui/                  Tkinter app: theme, widgets, forms, road editor, main window
 ```
 
-## Extending
-
-- **New input:** add a field to a dataclass in `config.py` and a `ParamSpec`
-  in `parameters.py`. It then appears in the form and can be swept.
-- **New feature shape:** add it to `SHAPES` and `_shape()` (and `_kinks()` if
-  its slope jumps) in `road.py`. The editor offers it automatically.
-- **New preset card:** add it to `PRESETS`, `PRESET_DEFAULTS` and
-  `preset_features()` in `road.py`.
-- **New limit or ranking value:** `constraints.py` / `RANK_METRICS` in `metrics.py`.
-- **Better tire model:** replace `tire_contact_force()` in `model.py`.
-- **Half car or web front end:** `model.py`, `sweep.py` and `plotting.py`
-  have no GUI code, so a new model class or a web page can reuse them.
 
 ## Assumptions and limits of the model
 
