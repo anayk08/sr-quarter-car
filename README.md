@@ -22,6 +22,20 @@ python run_app.py
 `python -m quartercar` also starts it. On Linux, install Tk first
 (`sudo apt install python3-tk`).
 
+### Web app
+
+The Streamlit web app uses the same parameter registry, design case, simulation,
+limits, scoring, and sweep engine as the desktop app:
+
+```
+streamlit run web_app.py
+```
+
+It includes the same setup and sweep inputs, derived values, road profiles,
+response and sweep plots, pass/fail results, ranking, setup loading, CSV export,
+and sweep cancellation. Web controls use browser-friendly selection buttons in
+place of desktop hover and double-click actions.
+
 ## Using the app
 
 | Area | What it does |
