@@ -1,12 +1,12 @@
 """
-Main window of the FSAE quarter-car design tool.
+Main window of the SR-18 Quarter Car Modeling Tool.
 """
 
 # ---------------------------------------------------------------------------
 # APP
 #
 #   +----------------+--------------------------------------------+
-#   |                |                 the road                   |
+#   |                |                 the sim                    |
 #   |   parameters   |    views: road | response | sweep | ranking |
 #   |  [setup|sweep] |    (the road view is also the road editor) |
 #   |                +---------------------+----------------------+
@@ -129,7 +129,7 @@ class QuarterCarApp:
         px = self.theme.px
         root = self.root
 
-        root.title("FSAE quarter-car suspension design tool")
+        root.title("SR-18 Quarter Car Modeling Tool")
         root.configure(bg=BACKGROUND)
 
         screen_width = root.winfo_screenwidth()
@@ -197,13 +197,13 @@ class QuarterCarApp:
         self.parameters_panel = Panel(outer, self.theme, "parameters")
         self.parameters_panel.grid(row=0, column=0, sticky="nsew", padx=(0, px(GAP)))
 
-        # Right: the road, the road cards, the results
+        # Right: the sim views, the road cards, the results
         right = tk.Frame(outer, bg=BACKGROUND)
         right.grid(row=0, column=1, sticky="nsew")
         right.columnconfigure(0, weight=1)
         right.rowconfigure(0, weight=1)
 
-        self.road_panel = Panel(right, self.theme, "the road")
+        self.road_panel = Panel(right, self.theme, "the sim")
         self.road_panel.grid(row=0, column=0, sticky="nsew")
 
         cards = tk.Frame(right, bg=BACKGROUND)
@@ -818,8 +818,9 @@ class QuarterCarApp:
             contact = (f"tire in the air {metrics.air_time * 1000:.1f} ms "
                        f"(limit {limits.max_air_time * 1000:.1f} ms)")
         else:
-            contact = (f"tire stays on the ground, lowest load {metrics.min_contact_force:.0f} N "
-                       f"({metrics.max_tire_load_loss * 100:.0f} % lost)")
+            contact = (f"tire stays on the ground, lowest normal force "
+                       f"{metrics.min_normal_force:.0f} N "
+                       f"({metrics.max_normal_force_loss * 100:.0f} % below static)")
 
         self.summary.configure(text=contact)
 
@@ -1065,7 +1066,7 @@ class QuarterCarApp:
                 f"{self._describe_point(self.sweep, point, chr(10))}\n"
                 f"{rank.label} {rank.format(metrics)} {rank.unit}  ({verdict})\n"
                 f"accel {metrics.max_body_acceleration / GRAVITY:.2f} g  |  "
-                f"load lost {metrics.max_tire_load_loss * 100:.0f} %  |  "
+                f"force lost {metrics.max_normal_force_loss * 100:.0f} %  |  "
                 f"comp {metrics.max_compression * 1000:.1f} mm"
             )
 
