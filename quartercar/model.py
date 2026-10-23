@@ -36,13 +36,13 @@ Quarter-car model (2 DOF, one wheel corner) and its time simulation.
 #
 #     spring_force  = wheel_rate * (zs - zu)
 #     damping_force = damper(vs - vu)                     (damper.py)
-#     tire_force    = static_tire_load - contact_force    (change in tire load)
-#     contact_force = kt * compression + ct * compression rate,
+#     tire_force    = static_normal_force - normal_force    (change in normal force)
+#     normal_force = kt * compression + ct * compression rate,
 #                     never below 0, and 0 when the tire is off the ground
 #
 #   Gravity and downforce are carried by the static spring and tire preload,
 #   so they cancel out of the equations (checked in verify_model.py).
-#   They only appear in static_tire_load, which decides when the tire lifts.
+#   They only appear in static_normal_force, which decides when the tire lifts.
 # ---------------------------------------------------------------------------
 
 
@@ -63,7 +63,7 @@ from .road import make_road
 # 2. TIRE
 # ---------------------------------------------------------------------------
 
-def tire_contact_force(tire_compression, compression_rate, tire_spring_rate, tire_damping):
+def tire_normal_force(tire_compression, compression_rate, tire_spring_rate, tire_damping):
     """
     Point-contact tire: vertical force from the road on the wheel (N, + = up).
 
@@ -105,10 +105,10 @@ class QuarterCarModel:
         # Tire
         self.tire_spring_rate = corner.tire_spring_rate
         self.tire_damping = corner.tire_damping
-        self.static_tire_load = corner.static_tire_load
+        self.static_normal_force = corner.static_normal_force
 
         # Tire compression at static equilibrium
-        self.static_tire_deflection = self.static_tire_load / self.tire_spring_rate
+        self.static_tire_deflection = self.static_normal_force / self.tire_spring_rate
 
         # Road
         self.road = make_road(case.road, corner.tire_radius)
@@ -148,17 +148,17 @@ class QuarterCarModel:
 
         compression_rate = vr - vu
 
-        contact_force = tire_contact_force(
+        normal_force = tire_normal_force(
             tire_compression,
             compression_rate,
             self.tire_spring_rate,
             self.tire_damping,
         )
 
-        # Change in tire load from static (same meaning as v1's tire_force)
-        tire_force = self.static_tire_load - contact_force
+        # Change in normal force from static (same meaning as v1's tire_force)
+        tire_force = self.static_normal_force - normal_force
 
-        return zr, vr, spring_force, damping_force, contact_force, tire_force
+        return zr, vr, spring_force, damping_force, normal_force, tire_force
 
     def quarter_car(self, t, y, road_time=None):
         """State derivatives [vs, as, vu, au] for solve_ivp."""
@@ -201,13 +201,13 @@ class SimulationResult:
 
     sprung_acceleration: np.ndarray
     suspension_travel: np.ndarray       # zs - zu, + = rebound
-    contact_force: np.ndarray           # tire-road force, 0 = airborne
+    normal_force: np.ndarray           # tire-road force, 0 = airborne
     ride_height: np.ndarray             # chassis height above flat ground at this corner
 
     damper_velocity: np.ndarray         # at the damper shaft, + = rebound
     damper_force: np.ndarray            # at the damper shaft
 
-    static_tire_load: float
+    static_normal_force: float
 
 
 # ---------------------------------------------------------------------------
@@ -309,11 +309,11 @@ def build_result(case, model, TIME, states):
     road_displacement = np.zeros(sample_count)
     spring_force = np.zeros(sample_count)
     damping_force = np.zeros(sample_count)
-    contact_force = np.zeros(sample_count)
+    normal_force = np.zeros(sample_count)
 
     for i in range(sample_count):
 
-        road_displacement[i], _, spring_force[i], damping_force[i], contact_force[i], _ = (
+        road_displacement[i], _, spring_force[i], damping_force[i], normal_force[i], _ = (
             model.forces(
                 TIME[i],
                 sprung_displacement[i],
@@ -342,14 +342,14 @@ def build_result(case, model, TIME, states):
         # Suspension travel (+ = rebound, as in v1)
         suspension_travel=sprung_displacement - unsprung_displacement,
 
-        contact_force=contact_force,
+        normal_force=normal_force,
 
         # Chassis height at this corner (flat ground under the chassis)
-        ride_height=case.corner.ride_height_at_speed + sprung_displacement,
+        ride_height=case.corner.equilibrium_height_at_speed + sprung_displacement,
 
         damper_velocity=damper_velocity,
         damper_force=damper_force,
-        static_tire_load=model.static_tire_load,
+        static_normal_force=model.static_normal_force,
     )
 
 
