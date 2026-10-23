@@ -1,4 +1,4 @@
-# SR-18 Quarter Car modeling tool
+# SR-18 Quarter Car Modeling Tool
 
 A desktop app for sizing one wheel corner of our FSAE car. You build a road
 (presets or your own), sweep motion ratio, spring rate, damping, downforce,
@@ -24,7 +24,7 @@ python run_app.py
 |---|---|
 | **parameters**, setup tab | Every input, grouped. Gray rows are derived values (wheel rate, natural frequencies, damper coefficients, ...) that update while you type. Boxes with bad values turn red. Hover a label for help. |
 | **parameters**, sweep tab | Up to four swept variables, each with start / stop / step, and what to rank and map the results by. |
-| **the road** | Four views: `road` (model sketch and the road editor), `response` (time histories of the last run), `sweep` (metric map and trade-off chart), `ranking` (every swept setup in a table). |
+| **the sim** | Four views: `road` (model sketch and the road editor), `response` (time histories of the last run), `sweep` (metric map and trade-off chart), `ranking` (every swept setup in a table). |
 | road cards | Presets: bump, ditch, triangle, rumble strip. Each remembers its own size. |
 | **results** | Motion ratio, spring rate, minimum ride height, max travel (compression / rebound) and max body acceleration, each with its limit and a pass / fail mark. |
 
@@ -73,7 +73,7 @@ mu * zu'' =   spring_force + damping_force - tire_force
 
 spring_force  = wheel_rate * (zs - zu)
 damping_force = damper(vs - vu)
-tire_force    = static_tire_load - contact_force
+tire_force    = static_normal_force - normal_force
 ```
 
 Same conventions as v1. z is positive up and measured from static
@@ -85,8 +85,8 @@ equilibrium. Suspension travel = `zs - zu`, with + = rebound. States are
 | Spring | `wheel_rate = spring_rate x MR^2`, where MR = spring travel / wheel travel. Spring and damper share one MR (coilover). |
 | Damper | Four damping ratios (LSC, HSC, LSR, HSR) times `c_critical = 2 sqrt(wheel_rate x sprung_mass)`, as in the v1 spreadsheet. Knee speeds are **damper shaft** speeds; the model divides them by MR to get wheel speeds. |
 | Tire | Point contact. The spring plus `tire_damping_ratio x 2 sqrt(kt x mu)`. It pushes but never pulls, and the wheel can leave the ground. |
-| Downforce | This corner's share, constant during a run. It lowers the ride height by `downforce / ride_rate` and adds to the static tire load. |
-| Road | A list of features along the road. The car starts at x = 0 and drives at a set speed, so `x = speed x t` and road velocity = slope x speed. Overlapping features add up. |
+| Downforce | This corner's share, constant during a run. It lowers the equilibrium height by `downforce / ride_rate` and adds to the static normal force on the wheel. |
+| Road | A list of features along the road. The car starts at x = 0 and drives at a set speed, so `x = speed x t` and the road profile's time derivative `dz/dt = slope x speed`. Overlapping features add up. |
 | Solver | `scipy.integrate.solve_ivp` (RK45). The run restarts at every corner of the road input, with `max_step = shortest piece / 20` on the road, so the solver cannot step over a feature. |
 
 Feature shapes:
@@ -94,7 +94,7 @@ Feature shapes:
 | Shape | Input to the tire |
 |---|---|
 | bump | Half-sine. A negative height makes a smooth dip. |
-| triangle | Straight ramp up, then down. Constant road velocity, so it is a clean damper test. |
+| triangle | Straight ramp up, then down. Constant dz/dt of the road profile, so it is a clean damper test. |
 | hole | A sharp-edged hole. A point-contact tire would drop straight to the bottom, so the input is the path of a rigid wheel (the tire radius) rolling over it: down over the near edge, along the bottom if it gets there, then a hard hit climbing out over the far edge. A narrow hole is bridged: the wheel drops less than the hole is deep. The road view shows the hole's walls dashed and the wheel path solid. |
 
 Presets: **bump** = one bump, **ditch** = one hole (its height and length
@@ -114,7 +114,7 @@ A setup **passes** only if all of these hold for the whole run:
 | max tire air time | time with the tire off the ground <= limit (0 = never) |
 
 Setups that pass are ranked by one value you pick ("rank by" on the sweep tab):
-tire load lost, RMS tire load change, peak or RMS body acceleration,
+normal force lost, RMS normal force change, peak or RMS body acceleration,
 compression or rebound travel, min ride height, or tire air time. Setups that
 fail come last, ordered by how far past the limits they are ("over limit %").
 
@@ -157,3 +157,4 @@ quartercar/
 - The damping ratios are single-DOF values, like the spreadsheet. The real
   body-mode damping of the 2-DOF model is shown as "2-DOF modal damping" and
   is lower.
+
