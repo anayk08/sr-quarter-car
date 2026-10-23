@@ -351,7 +351,7 @@ def refresh_road(plot, road, selected=None, rescale=False):
 
 
 def plot_road(fig, case, selected=None):
-    """Road view: model sketch, the road (with a point per feature) and its velocity."""
+    """Road view: model sketch, the road (with a point per feature) and its dz/dt."""
 
     try:
         road = make_road(case.road, case.corner.tire_radius)
@@ -393,8 +393,8 @@ def plot_road(fig, case, selected=None):
         velocity_ax.set_ylabel("m/s")
         velocity_ax.set_xlabel("distance from the car's start (m)")
         velocity_ax.set_title(
-            f"vertical road velocity at {case.road.speed * 3.6:.0f} km/h"
-            + (f"  |  peak {road.peak_velocity():.2f} m/s" if road else "")
+            f"road profile time derivative, dz/dt, at {case.road.speed * 3.6:.0f} km/h"
+            + (f"  |  peak {road.peak_profile_derivative():.2f} m/s" if road else "")
         )
 
         refresh_road(plot, road, selected, rescale=True)
@@ -410,10 +410,10 @@ def plot_road(fig, case, selected=None):
 # 4. RESPONSE VIEW (ONE RUN)
 # ---------------------------------------------------------------------------
 
-def _airborne_spans(time, contact_force):
+def _airborne_spans(time, normal_force):
     """(start, end) time pairs where the tire is off the ground."""
 
-    airborne = contact_force <= 0.0
+    airborne = normal_force <= 0.0
     edges = np.flatnonzero(np.diff(airborne.astype(int)))
 
     starts = list(edges[airborne[edges + 1]] + 1)
@@ -428,7 +428,7 @@ def _airborne_spans(time, contact_force):
 
 
 def plot_response(fig, evaluation):
-    """Six panels: displacements, travel, body accel, ride height, tire load, damper."""
+    """Six panels: displacements, travel, body accel, ride height, normal force, damper."""
 
     result = evaluation.result
     metrics = evaluation.metrics
@@ -463,7 +463,7 @@ def plot_response(fig, evaluation):
         disp_ax.plot(time, result.road_displacement * 1000, color=ROAD, linewidth=1.2, label="road")
         disp_ax.plot(time, result.unsprung_displacement * 1000, color=WHEEL, label="wheel")
         disp_ax.plot(time, result.sprung_displacement * 1000, color=BODY, label="body")
-        disp_ax.set_title("displacement (mm)")
+        disp_ax.set_title("displacement from equilibrium (mm)")
         disp_ax.legend(loc="upper right", ncols=3, handlelength=1.4, columnspacing=1.0)
         disp_ax.set_xlim(time[0], time[-1])
 
@@ -526,26 +526,26 @@ def plot_response(fig, evaluation):
                       not passed["ride_height"])
 
         # --------------------------------------------------
-        # Tire contact force (shaded = tire in the air)
+        # Normal force on the wheel (shaded = tire in the air)
         # --------------------------------------------------
 
-        for start, end in _airborne_spans(time, result.contact_force):
+        for start, end in _airborne_spans(time, result.normal_force):
             tire_ax.axvspan(start, end, color=LIMIT, alpha=0.12, linewidth=0)
 
-        tire_ax.axhline(result.static_tire_load, color=AXIS, linewidth=1.0)
-        tire_ax.annotate("static", xy=(1.0, result.static_tire_load),
+        tire_ax.axhline(result.static_normal_force, color=AXIS, linewidth=1.0)
+        tire_ax.annotate("static", xy=(1.0, result.static_normal_force),
                          xycoords=("axes fraction", "data"), xytext=(-3, 2),
                          textcoords="offset points", ha="right", va="bottom",
                          fontsize=7.5, color=INK_SECONDARY)
-        tire_ax.plot(time, result.contact_force, color=WHEEL)
-        tire_ax.set_ylim(0, result.contact_force.max() * 1.1)
+        tire_ax.plot(time, result.normal_force, color=WHEEL)
+        tire_ax.set_ylim(0, result.normal_force.max() * 1.1)
 
         air_text = f"  |  airborne {metrics.air_time * 1000:.0f} ms" if metrics.air_time > 0 else ""
-        tire_ax.set_title(f"tire load (N){air_text}")
+        tire_ax.set_title(f"normal force on wheel (N){air_text}")
 
-        i = int(np.argmin(result.contact_force))
-        _mark_extreme(tire_ax, time[i], result.contact_force[i],
-                      f"{result.contact_force[i]:.0f} N ({metrics.max_tire_load_loss * 100:.0f} % lost)",
+        i = int(np.argmin(result.normal_force))
+        _mark_extreme(tire_ax, time[i], result.normal_force[i],
+                      f"{result.normal_force[i]:.0f} N ({metrics.max_normal_force_loss * 100:.0f} % below static)",
                       not passed["contact"])
 
         # --------------------------------------------------
@@ -731,11 +731,11 @@ def plot_sweep(fig, sweep, metric, x_axis=0, y_axis=1):
             map_ax.legend(loc="best")
 
         # --------------------------------------------------
-        # Trade-off: body acceleration vs tire load loss
+        # Trade-off: body acceleration vs normal force loss
         # --------------------------------------------------
 
         accel = np.array([p.evaluation.metrics.max_body_acceleration / GRAVITY for p in valid])
-        load_loss = np.array([p.evaluation.metrics.max_tire_load_loss * 100 for p in valid])
+        load_loss = np.array([p.evaluation.metrics.max_normal_force_loss * 100 for p in valid])
         feasible = np.array([p.feasible for p in valid])
 
         info.trade_points = valid
@@ -752,7 +752,7 @@ def plot_sweep(fig, sweep, metric, x_axis=0, y_axis=1):
 
         if best is not None and best.feasible:
             bx = best.evaluation.metrics.max_body_acceleration / GRAVITY
-            by = best.evaluation.metrics.max_tire_load_loss * 100
+            by = best.evaluation.metrics.max_normal_force_loss * 100
             trade_ax.scatter([bx], [by], marker="o", s=90, color=INK, edgecolors=SURFACE,
                              linewidths=1.5, zorder=4, label=f"best {rank.label}")
             trade_ax.annotate("best", xy=(bx, by), xytext=(7, -2), textcoords="offset points",
@@ -765,7 +765,7 @@ def plot_sweep(fig, sweep, metric, x_axis=0, y_axis=1):
         trade_ax.set_title("trade-off  |  body control vs grip")
         trade_ax.set_title("lower left = better", loc="right", fontsize=7.5, color=INK_MUTED)
         trade_ax.set_xlabel("peak body acceleration (g)")
-        trade_ax.set_ylabel("most tire load lost (%)")
+        trade_ax.set_ylabel("most normal force lost (%)")
         trade_ax.set_ylim(min(-2, load_loss.min() - 4), 104)
         trade_ax.legend(loc="best")
 
