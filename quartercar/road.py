@@ -17,7 +17,8 @@ Road input: vertical road displacement and velocity under the tire.
 #               the far edge (the hard hit)
 #
 #   Overlapping features add up. The car is at x = 0 at t = 0 and drives at
-#   a constant speed, so x = speed * t and road velocity = slope * speed.
+#   a constant speed, so x = speed * t and the road profile's time
+#   derivative dz/dt = slope * speed.
 #
 #   The preset cards build their features from a few size values:
 #     bump      one bump                 ditch          one hole
@@ -181,7 +182,7 @@ class Road:
 
     def breakpoints(self):
         """
-        Times where the road velocity jumps. The solver restarts at each one,
+        Times where dz/dt of the road profile jumps. The solver restarts at each one,
         so it can never step over a feature.
         """
 
@@ -232,8 +233,8 @@ class Road:
 
         return z, slope * self.speed
 
-    def peak_velocity(self):
-        """Largest vertical road velocity (m/s), checked just inside every smooth piece."""
+    def peak_profile_derivative(self):
+        """Largest time derivative of the road profile, dz/dt (m/s), checked just inside every smooth piece."""
 
         edges = [t * self.speed for t in self.breakpoints()]
         positions = np.concatenate([
