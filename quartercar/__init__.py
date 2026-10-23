@@ -1,5 +1,5 @@
 """
-FSAE quarter-car suspension design tool.
+SR-18 Quarter Car Modeling Tool.
 
 One wheel corner, 2 DOF: sprung mass (this corner's share of chassis +
 driver) on a spring and nonlinear damper, over the unsprung mass on a tire

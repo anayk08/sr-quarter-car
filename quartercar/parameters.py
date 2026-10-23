@@ -497,4 +497,3 @@ DERIVED = [
         lambda case: f"{_road(case).peak_profile_derivative():.2f} m/s",
     ),
 ]
-

@@ -1,5 +1,5 @@
 """
-Design configuration for the FSAE quarter-car tool.
+Design configuration for the SR-18 Quarter Car Modeling Tool.
 
 Every number the model uses lives in the dataclasses below. The other modules
 only read from these objects, so no physics value is hard-coded anywhere else.
@@ -8,7 +8,7 @@ only read from these objects, so no physics value is hard-coded anywhere else.
 # ---------------------------------------------------------------------------
 # CONFIGURATION
 #
-#   CornerParams   - masses, spring, motion ratio, tire, damper, ride height
+#   CornerParams   - masses, spring, motion ratio, tire, damper, equilibrium height
 #   RoadParams     - preset card or custom road, and the vehicle speed
 #   DesignLimits   - hard constraints a setup must satisfy
 #   SimSettings    - solver and output settings
@@ -108,7 +108,7 @@ class CornerParams:
     damper: DamperSettings = field(default_factory=DamperSettings)
 
     # Ride height and downforce
-    static_ride_height: float = 0.030    # m, parked (no downforce)
+    default_equilibrium_height: float = 0.030    # m, equilibrium height with no downforce (parked)
     downforce: float = 0.0               # N on this corner at the run speed
 
     # -------------------------------------------------------------------
@@ -140,8 +140,8 @@ class CornerParams:
         return self.tire_damping_ratio * tire_critical_damping
 
     @property
-    def static_tire_load(self):
-        # Load on the tire when driving on a flat road (weight + downforce)
+    def static_normal_force(self):
+        # Normal force on the wheel when driving on a flat road (weight + downforce)
         return (self.sprung_mass + self.unsprung_mass) * GRAVITY + self.downforce
 
     @property
@@ -150,8 +150,8 @@ class CornerParams:
         return self.downforce / self.ride_rate
 
     @property
-    def ride_height_at_speed(self):
-        return self.static_ride_height - self.downforce_sink
+    def equilibrium_height_at_speed(self):
+        return self.default_equilibrium_height - self.downforce_sink
 
 
 # ---------------------------------------------------------------------------

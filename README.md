@@ -157,4 +157,3 @@ quartercar/
 - The damping ratios are single-DOF values, like the spreadsheet. The real
   body-mode damping of the 2-DOF model is shown as "2-DOF modal damping" and
   is lower.
-
