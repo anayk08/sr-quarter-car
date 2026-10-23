@@ -236,10 +236,10 @@ PARAMETERS = [
     # --------------------------------------------------
 
     ParamSpec(
-        "static_ride_height", "static ride height", "ride height & downforce",
-        ("corner", "static_ride_height"),
-        short="ride height", unit="mm", scale=MM, decimals=1, positive=True,
-        help="Chassis height at this corner, parked, with driver.",
+        "default_equilibrium_height", "default equilibrium height", "ride height & downforce",
+        ("corner", "default_equilibrium_height"),
+        short="equil. height", unit="mm", scale=MM, decimals=1, positive=True,
+        help="Chassis height at this corner at rest on flat ground, with driver: the equilibrium height with no downforce.",
         sweep_range=(20, 50, 5),
     ),
     ParamSpec(
@@ -283,7 +283,7 @@ PARAMETERS = [
         sweep_range=(20, 100, 10),
     ),
     ParamSpec(
-        "start_time", "start time", "road", ("road", "start_time"),
+        "start_time", "time to reach feature", "road", ("road", "start_time"),
         unit="s", decimals=3, minimum=0, maximum=60, profiles=PRESETS,
         help="When the tire reaches the road feature.",
     ),
@@ -323,7 +323,7 @@ PARAMETERS = [
     # --------------------------------------------------
 
     ParamSpec(
-        "settle_time", "time after the road", "simulation", ("sim", "settle_time"),
+        "settle_time", "settle time after road features", "simulation", ("sim", "settle_time"),
         unit="s", decimals=2, positive=True, maximum=30,
         help="Simulated time after the last road feature.",
     ),
@@ -463,13 +463,13 @@ DERIVED = [
         "ride_rate", "ride rate (with tire)", "spring",
         lambda case: f"{case.corner.ride_rate * LBF_IN:.0f} lbf/in",
     ),
-    DerivedSpec("frequencies", "natural frequency", "spring", _modes_text),
+    DerivedSpec("frequencies", "natural frequencies", "spring", _modes_text),
     DerivedSpec(
         "tire_damping", "tire damping", "tire",
         lambda case: f"{case.corner.tire_damping:.0f} N*s/m",
     ),
     DerivedSpec(
-        "critical_damping", "critical damping (wheel)", "damper",
+        "critical_damping", "critical damping (body, at wheel)", "damper",
         lambda case: f"{case.corner.critical_damping:.0f} N*s/m",
     ),
     DerivedSpec(
@@ -485,15 +485,16 @@ DERIVED = [
         help="Actual damping of each mode in the 2-DOF model (low-speed slopes).",
     ),
     DerivedSpec(
-        "ride_height_at_speed", "ride height at speed", "ride height & downforce",
+        "equilibrium_height_at_speed", "equilibrium height at speed", "ride height & downforce",
         lambda case: (
-            f"{case.corner.ride_height_at_speed * MM:.1f} mm  "
-            f"(downforce sink {case.corner.downforce_sink * MM:.1f})"
+            f"{case.corner.equilibrium_height_at_speed * MM:.1f} mm  "
+            f"(drop from downforce {case.corner.downforce_sink * MM:.1f})"
         ),
     ),
-    DerivedSpec("road_timing", "time on the road features", "road", _road_timing_text),
+    DerivedSpec("road_timing", "time to cross road features", "road", _road_timing_text),
     DerivedSpec(
-        "road_velocity", "peak road velocity", "road",
-        lambda case: f"{_road(case).peak_velocity():.2f} m/s",
+        "road_velocity", "peak road profile dz/dt", "road",
+        lambda case: f"{_road(case).peak_profile_derivative():.2f} m/s",
     ),
 ]
+
